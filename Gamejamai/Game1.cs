@@ -8,12 +8,12 @@ namespace Gamejamai
     public class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
-        private Renderer _renderer;
-        private World _world;
-        private Player _player;
-        private InventoryWheel _inventoryWheel;
-        private Engine.Horse _horse;
+        private SpriteBatch _spriteBatch = null!;
+        private Renderer _renderer = null!;
+        private World _world = null!;
+        private Player _player = null!;
+        private InventoryWheel _inventoryWheel = null!;
+        private Engine.Horse _horse = null!;
 
         public Game1()
         {

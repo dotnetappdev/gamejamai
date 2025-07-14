@@ -2,9 +2,9 @@ namespace Gamejamai.Engine
 {
     public static class Assets
     {
-        public static Microsoft.Xna.Framework.Graphics.Model HorseModel;
-        public static Microsoft.Xna.Framework.Graphics.Model HandsModel;
-        public static Microsoft.Xna.Framework.Graphics.Model GunModel;
+        public static Microsoft.Xna.Framework.Graphics.Model HorseModel = null!;
+        public static Microsoft.Xna.Framework.Graphics.Model HandsModel = null!;
+        public static Microsoft.Xna.Framework.Graphics.Model GunModel = null!;
         public static Dictionary<string, Microsoft.Xna.Framework.Graphics.Texture2D> InventoryIcons = new();
 
         public static void Load(Microsoft.Xna.Framework.Content.ContentManager content)

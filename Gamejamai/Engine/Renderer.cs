@@ -1,3 +1,17 @@
+using Microsoft.Xna.Framework.Graphics;
+using Gamejamai.Engine;
+using System;
+
+namespace Gamejamai.Engine
+{
+    public class Renderer
+    {
+        private GraphicsDevice _graphicsDevice;
+        public Renderer(GraphicsDevice graphicsDevice)
+        {
+            _graphicsDevice = graphicsDevice;
+        }
+
         // Draw FPS hands and gun in first-person view
         public void DrawFirstPersonView(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice, Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
         {
@@ -34,18 +48,6 @@
                     mesh.Draw();
                 }
             }
-        }
-using Microsoft.Xna.Framework.Graphics;
-using Gamejamai.Engine;
-
-namespace Gamejamai.Engine
-{
-    public class Renderer
-    {
-        private GraphicsDevice _graphicsDevice;
-        public Renderer(GraphicsDevice graphicsDevice)
-        {
-            _graphicsDevice = graphicsDevice;
         }
 
         public void DrawWorld(SpriteBatch spriteBatch, World world)
