@@ -43,6 +43,19 @@ namespace Gamejamai
         private bool _prevLeftTrigger = false;
         private bool _prevAButton = false;
 
+        private float GetTerrainHeightAtPosition(float x, float y)
+        {
+            // Clamp coordinates to world bounds
+            int worldX = (int)MathHelper.Clamp(x, 0, _world.Width - 1);
+            int worldY = (int)MathHelper.Clamp(y, 0, _world.Height - 1);
+            
+            // Get height from world and apply same scaling as in terrain generation
+            float worldHeight = _world.Heights[worldX, worldY];
+            float heightScale = 0.5f; // Same as in Renderer.cs Initialize3DTerrain
+            
+            return worldHeight * heightScale;
+        }
+
         protected override void Update(GameTime gameTime)
         {
             var keyboard = Keyboard.GetState();
@@ -91,8 +104,17 @@ namespace Gamejamai
             GraphicsDevice.Clear(Color.CornflowerBlue);
             
             // Create view and projection matrices for 3D rendering
-            Vector3 cameraPosition = new Vector3(_player.Position.X, 10, _player.Position.Y - 5);
-            Vector3 cameraTarget = new Vector3(_player.Position.X, 0, _player.Position.Y);
+            // Player position in world space (scaled by 2.0f in terrain generation)
+            Vector3 playerWorldPos = new Vector3(_player.Position.X * 2.0f, 0, _player.Position.Y * 2.0f);
+            
+            // Sample terrain height at player position for accurate camera positioning
+            float terrainHeight = GetTerrainHeightAtPosition(_player.Position.X, _player.Position.Y);
+            
+            // Position camera at player eye level (about 1.7 units above ground)
+            Vector3 cameraPosition = new Vector3(playerWorldPos.X, terrainHeight + 1.7f, playerWorldPos.Z);
+            
+            // Look forward from player position (first person view)
+            Vector3 cameraTarget = new Vector3(playerWorldPos.X, terrainHeight + 1.7f, playerWorldPos.Z + 10);
             Vector3 cameraUp = Vector3.Up;
             
             Matrix view = Matrix.CreateLookAt(cameraPosition, cameraTarget, cameraUp);
