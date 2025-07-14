@@ -11,28 +11,38 @@ namespace Gamejamai.Engine
         private GraphicsDevice _graphicsDevice;
         private BasicEffect _basicEffect;
         private BasicEffect _skyboxEffect;
+        private BasicEffect _playerEffect;
         private VertexBuffer _terrainVertexBuffer = null!;
         private IndexBuffer _terrainIndexBuffer = null!;
         private VertexBuffer _waterVertexBuffer = null!;
         private IndexBuffer _waterIndexBuffer = null!;
         private VertexBuffer _skyboxVertexBuffer = null!;
         private IndexBuffer _skyboxIndexBuffer = null!;
+        private VertexBuffer _playerVertexBuffer = null!;
+        private IndexBuffer _playerIndexBuffer = null!;
         private int _terrainIndexCount;
         private int _waterIndexCount;
         private int _skyboxIndexCount;
+        private int _playerIndexCount;
         private Texture2D _whitePixel;
+        private Texture2D? _radarTexture;
         private bool _terrain3DInitialized = false;
         private bool _skyboxInitialized = false;
+        private bool _playerModelInitialized = false;
 
         public Renderer(GraphicsDevice graphicsDevice)
         {
             _graphicsDevice = graphicsDevice;
             _basicEffect = new BasicEffect(graphicsDevice);
             _skyboxEffect = new BasicEffect(graphicsDevice);
+            _playerEffect = new BasicEffect(graphicsDevice);
             
             // Create a single white pixel for basic rendering
             _whitePixel = new Texture2D(_graphicsDevice, 1, 1);
             _whitePixel.SetData(new[] { Color.White });
+            
+            // Create radar texture
+            CreateRadarTexture();
             
             // Setup advanced lighting effect
             _basicEffect.Alpha = 1.0f;
@@ -60,7 +70,93 @@ namespace Gamejamai.Engine
             _skyboxEffect.TextureEnabled = false;
             _skyboxEffect.VertexColorEnabled = true;
             
+            // Setup player effect
+            _playerEffect.LightingEnabled = true;
+            _playerEffect.PreferPerPixelLighting = true;
+            _playerEffect.AmbientLightColor = new Vector3(0.3f, 0.3f, 0.4f);
+            _playerEffect.DirectionalLight0.Enabled = true;
+            _playerEffect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1, -1, -1));
+            _playerEffect.DirectionalLight0.DiffuseColor = Vector3.One;
+            
             InitializeSkybox();
+            InitializePlayerModel();
+        }
+        
+        private void CreateRadarTexture()
+        {
+            int size = 120;
+            _radarTexture = new Texture2D(_graphicsDevice, size, size);
+            Color[] data = new Color[size * size];
+            
+            // Create circular radar background
+            Vector2 center = new Vector2(size / 2f, size / 2f);
+            float radius = size / 2f - 5;
+            
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    Vector2 pos = new Vector2(x, y);
+                    float distance = Vector2.Distance(pos, center);
+                    
+                    if (distance <= radius)
+                    {
+                        // Inner radar area
+                        if (distance <= radius - 10)
+                        {
+                            data[y * size + x] = Color.Black * 0.7f;
+                        }
+                        // Radar border
+                        else
+                        {
+                            data[y * size + x] = Color.DarkGray;
+                        }
+                    }
+                    else
+                    {
+                        data[y * size + x] = Color.Transparent;
+                    }
+                }
+            }
+            
+            _radarTexture.SetData(data);
+        }
+        
+        private void InitializePlayerModel()
+        {
+            if (_playerModelInitialized) return;
+            
+            var playerVertices = new List<VertexPositionNormalTexture>();
+            var playerIndices = new List<int>();
+            
+            // Create a more realistic player model with multiple parts
+            
+            // Head
+            CreateCube(playerVertices, playerIndices, 0.4f, Vector3.Zero + new Vector3(0, 1.7f, 0));
+            
+            // Body (torso)
+            CreateCube(playerVertices, playerIndices, new Vector3(0.6f, 0.8f, 0.3f), Vector3.Zero + new Vector3(0, 0.9f, 0));
+            
+            // Arms
+            CreateCube(playerVertices, playerIndices, new Vector3(0.2f, 0.7f, 0.2f), Vector3.Zero + new Vector3(-0.5f, 1.0f, 0));
+            CreateCube(playerVertices, playerIndices, new Vector3(0.2f, 0.7f, 0.2f), Vector3.Zero + new Vector3(0.5f, 1.0f, 0));
+            
+            // Legs
+            CreateCube(playerVertices, playerIndices, new Vector3(0.25f, 0.8f, 0.2f), Vector3.Zero + new Vector3(-0.15f, 0.0f, 0));
+            CreateCube(playerVertices, playerIndices, new Vector3(0.25f, 0.8f, 0.2f), Vector3.Zero + new Vector3(0.15f, 0.0f, 0));
+            
+            // Create player buffers
+            if (playerVertices.Count > 0)
+            {
+                _playerVertexBuffer = new VertexBuffer(_graphicsDevice, typeof(VertexPositionNormalTexture), playerVertices.Count, BufferUsage.WriteOnly);
+                _playerVertexBuffer.SetData(playerVertices.ToArray());
+                
+                _playerIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(int), playerIndices.Count, BufferUsage.WriteOnly);
+                _playerIndexBuffer.SetData(playerIndices.ToArray());
+                _playerIndexCount = playerIndices.Count;
+            }
+            
+            _playerModelInitialized = true;
         }
         
         private void InitializeSkybox()
@@ -340,6 +436,78 @@ namespace Gamejamai.Engine
             
             // Draw additional 3D environment objects
             DrawEnvironmentObjects(world, view, projection);
+            
+            // Draw the player
+            DrawPlayer3D(world, view, projection);
+        }
+        
+        private void DrawPlayer3D(World world, Matrix view, Matrix projection)
+        {
+            // Note: For now, we'll skip drawing the 3D player model in first person
+            // In a real FPS game, you might draw weapon models or other first-person elements
+            return;
+        }
+        
+        public void DrawRadar(SpriteBatch spriteBatch, World world, Player player)
+        {
+            if (_radarTexture == null) return;
+            
+            // RDR2-style radar position (bottom left)
+            Vector2 radarPosition = new Vector2(20, _graphicsDevice.Viewport.Height - 140);
+            
+            // Draw radar background
+            spriteBatch.Draw(_radarTexture, radarPosition, Color.White);
+            
+            // Draw player dot in center
+            Vector2 radarCenter = radarPosition + new Vector2(60, 60);
+            spriteBatch.Draw(_whitePixel, new Rectangle((int)radarCenter.X - 2, (int)radarCenter.Y - 2, 4, 4), Color.Yellow);
+            
+            // Draw terrain features and objects on radar
+            float radarScale = 0.3f; // Scale factor for world to radar
+            float radarRadius = 50f; // Radar detection radius
+            
+            // Draw nearby terrain features
+            for (int x = -20; x <= 20; x += 2)
+            {
+                for (int z = -20; z <= 20; z += 2)
+                {
+                    int worldX = (int)(player.Position.X + x);
+                    int worldZ = (int)(player.Position.Y + z);
+                    
+                    if (worldX >= 0 && worldX < world.Width && worldZ >= 0 && worldZ < world.Height)
+                    {
+                        float distance = (float)Math.Sqrt(x * x + z * z);
+                        if (distance <= radarRadius)
+                        {
+                            Vector2 dotPosition = radarCenter + new Vector2(x * radarScale, z * radarScale);
+                            
+                            // Color based on terrain height
+                            float height = world.Heights[worldX, worldZ];
+                            Color terrainColor = Color.Green;
+                            
+                            if (height > 0.7f)
+                                terrainColor = Color.Brown; // Mountains
+                            else if (height < 0.3f)
+                                terrainColor = Color.Blue; // Water
+                            
+                            spriteBatch.Draw(_whitePixel, new Rectangle((int)dotPosition.X, (int)dotPosition.Y, 1, 1), terrainColor * 0.6f);
+                        }
+                    }
+                }
+            }
+            
+            // Draw radar border
+            int borderThickness = 2;
+            Color borderColor = Color.Gray;
+            
+            // Top border
+            spriteBatch.Draw(_whitePixel, new Rectangle((int)radarPosition.X, (int)radarPosition.Y, 120, borderThickness), borderColor);
+            // Bottom border
+            spriteBatch.Draw(_whitePixel, new Rectangle((int)radarPosition.X, (int)radarPosition.Y + 118, 120, borderThickness), borderColor);
+            // Left border
+            spriteBatch.Draw(_whitePixel, new Rectangle((int)radarPosition.X, (int)radarPosition.Y, borderThickness, 120), borderColor);
+            // Right border
+            spriteBatch.Draw(_whitePixel, new Rectangle((int)radarPosition.X + 118, (int)radarPosition.Y, borderThickness, 120), borderColor);
         }
         
         private void DrawSkybox(Matrix view, Matrix projection)
@@ -539,6 +707,78 @@ namespace Gamejamai.Engine
             };
             
             indices.AddRange(cubeIndices);
+        }
+        
+        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<int> indices, Vector3 size, Vector3 position)
+        {
+            int startVertex = vertices.Count;
+            
+            // Define the 8 vertices of a cube
+            Vector3[] cubeVertices = {
+                new Vector3(-size.X, -size.Y, -size.Z), // 0
+                new Vector3(size.X, -size.Y, -size.Z),  // 1
+                new Vector3(size.X, size.Y, -size.Z),   // 2
+                new Vector3(-size.X, size.Y, -size.Z),  // 3
+                new Vector3(-size.X, -size.Y, size.Z),  // 4
+                new Vector3(size.X, -size.Y, size.Z),   // 5
+                new Vector3(size.X, size.Y, size.Z),    // 6
+                new Vector3(-size.X, size.Y, size.Z)    // 7
+            };
+            
+            // Define normals for each face
+            Vector3[] faceNormals = {
+                new Vector3(0, 0, -1), // Front
+                new Vector3(0, 0, 1),  // Back
+                new Vector3(-1, 0, 0), // Left
+                new Vector3(1, 0, 0),  // Right
+                new Vector3(0, -1, 0), // Bottom
+                new Vector3(0, 1, 0)   // Top
+            };
+            
+            // Define texture coordinates
+            Vector2[] texCoords = {
+                new Vector2(0, 1),
+                new Vector2(1, 1),
+                new Vector2(1, 0),
+                new Vector2(0, 0)
+            };
+            
+            // Define face indices
+            int[,] faceIndices = {
+                {0, 1, 2, 3}, // Front
+                {5, 4, 7, 6}, // Back
+                {4, 0, 3, 7}, // Left
+                {1, 5, 6, 2}, // Right
+                {4, 5, 1, 0}, // Bottom
+                {3, 2, 6, 7}  // Top
+            };
+            
+            // Create vertices for each face
+            for (int face = 0; face < 6; face++)
+            {
+                Vector3 normal = faceNormals[face];
+                
+                for (int i = 0; i < 4; i++)
+                {
+                    Vector3 vertex = cubeVertices[faceIndices[face, i]] + position;
+                    vertices.Add(new VertexPositionNormalTexture(vertex, normal, texCoords[i]));
+                }
+                
+                // Add indices for two triangles per face
+                int baseIndex = startVertex + face * 4;
+                indices.Add(baseIndex + 0);
+                indices.Add(baseIndex + 1);
+                indices.Add(baseIndex + 2);
+                
+                indices.Add(baseIndex + 0);
+                indices.Add(baseIndex + 2);
+                indices.Add(baseIndex + 3);
+            }
+        }
+        
+        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<int> indices, float size, Vector3 position)
+        {
+            CreateCube(vertices, indices, new Vector3(size, size, size), position);
         }
         
         private void CreateSphere(List<VertexPositionNormalTexture> vertices, List<int> indices, float radius, int segments)

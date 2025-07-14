@@ -89,12 +89,28 @@ namespace Gamejamai
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
+            
+            // Create view and projection matrices for 3D rendering
+            Vector3 cameraPosition = new Vector3(_player.Position.X, 10, _player.Position.Y - 5);
+            Vector3 cameraTarget = new Vector3(_player.Position.X, 0, _player.Position.Y);
+            Vector3 cameraUp = Vector3.Up;
+            
+            Matrix view = Matrix.CreateLookAt(cameraPosition, cameraTarget, cameraUp);
+            Matrix projection = Matrix.CreatePerspectiveFieldOfView(
+                MathHelper.ToRadians(45),
+                GraphicsDevice.Viewport.AspectRatio,
+                0.1f,
+                1000.0f);
+            
+            // Draw 3D world
+            _renderer.DrawWorld3D(_world, view, projection);
+            
+            // Draw 2D UI elements
             _spriteBatch.Begin();
-            _renderer.DrawWorld(_spriteBatch, _world);
-            _renderer.DrawHorse(_spriteBatch, _horse);
-            _renderer.DrawPlayer(_spriteBatch, _player);
             _renderer.DrawInventoryWheel(_spriteBatch, _inventoryWheel, _player);
+            _renderer.DrawRadar(_spriteBatch, _world, _player);
             _spriteBatch.End();
+            
             base.Draw(gameTime);
         }
     }
