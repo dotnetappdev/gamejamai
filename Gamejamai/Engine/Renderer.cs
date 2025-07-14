@@ -127,7 +127,7 @@ namespace Gamejamai.Engine
             if (_playerModelInitialized) return;
             
             var playerVertices = new List<VertexPositionNormalTexture>();
-            var playerIndices = new List<int>();
+            var playerIndices = new List<short>();
             
             // Create a more realistic player model with multiple parts
             
@@ -151,7 +151,7 @@ namespace Gamejamai.Engine
                 _playerVertexBuffer = new VertexBuffer(_graphicsDevice, typeof(VertexPositionNormalTexture), playerVertices.Count, BufferUsage.WriteOnly);
                 _playerVertexBuffer.SetData(playerVertices.ToArray());
                 
-                _playerIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(int), playerIndices.Count, BufferUsage.WriteOnly);
+                _playerIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(short), playerIndices.Count, BufferUsage.WriteOnly);
                 _playerIndexBuffer.SetData(playerIndices.ToArray());
                 _playerIndexCount = playerIndices.Count;
             }
@@ -165,7 +165,7 @@ namespace Gamejamai.Engine
             
             // Create a large cube for the skybox
             var skyboxVertices = new List<VertexPositionColor>();
-            var skyboxIndices = new List<int>();
+            var skyboxIndices = new List<short>();
             
             float size = 1000.0f;
             
@@ -190,7 +190,7 @@ namespace Gamejamai.Engine
             }
             
             // Define skybox indices (inside faces)
-            int[] cubeIndices = {
+            short[] cubeIndices = {
                 0, 1, 2, 1, 3, 2, // Left face
                 4, 6, 5, 5, 6, 7, // Right face  
                 0, 5, 1, 0, 4, 5, // Bottom face
@@ -205,7 +205,7 @@ namespace Gamejamai.Engine
             _skyboxVertexBuffer = new VertexBuffer(_graphicsDevice, typeof(VertexPositionColor), skyboxVertices.Count, BufferUsage.WriteOnly);
             _skyboxVertexBuffer.SetData(skyboxVertices.ToArray());
             
-            _skyboxIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(int), skyboxIndices.Count, BufferUsage.WriteOnly);
+            _skyboxIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(short), skyboxIndices.Count, BufferUsage.WriteOnly);
             _skyboxIndexBuffer.SetData(skyboxIndices.ToArray());
             _skyboxIndexCount = skyboxIndices.Count;
             
@@ -218,7 +218,7 @@ namespace Gamejamai.Engine
             
             // Generate terrain vertices with proper normals for realistic lighting
             var terrainVertices = new List<VertexPositionNormalTexture>();
-            var terrainIndices = new List<int>();
+            var terrainIndices = new List<short>();
             
             int width = world.Width;
             int height = world.Height;
@@ -250,10 +250,10 @@ namespace Gamejamai.Engine
             {
                 for (int z = 0; z < height - 1; z++)
                 {
-                    int topLeft = x * height + z;
-                    int topRight = (x + 1) * height + z;
-                    int bottomLeft = x * height + (z + 1);
-                    int bottomRight = (x + 1) * height + (z + 1);
+                    short topLeft = (short)(x * height + z);
+                    short topRight = (short)((x + 1) * height + z);
+                    short bottomLeft = (short)(x * height + (z + 1));
+                    short bottomRight = (short)((x + 1) * height + (z + 1));
                     
                     // First triangle (counter-clockwise)
                     terrainIndices.Add(topLeft);
@@ -269,7 +269,7 @@ namespace Gamejamai.Engine
             
             // Create realistic water vertices with wave animation
             var waterVertices = new List<VertexPositionNormalTexture>();
-            var waterIndices = new List<int>();
+            var waterIndices = new List<short>();
             float waterLevel = 2.0f; // Higher water level
             
             foreach (var river in world.Rivers)
@@ -278,6 +278,8 @@ namespace Gamejamai.Engine
                 int subdivisions = 10;
                 float stepX = (float)river.Width / subdivisions;
                 float stepZ = (float)river.Height / subdivisions;
+                
+                int waterStartIndex = waterVertices.Count;
                 
                 for (int i = 0; i <= subdivisions; i++)
                 {
@@ -297,15 +299,14 @@ namespace Gamejamai.Engine
                 }
                 
                 // Create water indices
-                int startIndex = waterVertices.Count - (subdivisions + 1) * (subdivisions + 1);
                 for (int i = 0; i < subdivisions; i++)
                 {
                     for (int j = 0; j < subdivisions; j++)
                     {
-                        int topLeft = startIndex + i * (subdivisions + 1) + j;
-                        int topRight = startIndex + (i + 1) * (subdivisions + 1) + j;
-                        int bottomLeft = startIndex + i * (subdivisions + 1) + (j + 1);
-                        int bottomRight = startIndex + (i + 1) * (subdivisions + 1) + (j + 1);
+                        short topLeft = (short)(waterStartIndex + i * (subdivisions + 1) + j);
+                        short topRight = (short)(waterStartIndex + (i + 1) * (subdivisions + 1) + j);
+                        short bottomLeft = (short)(waterStartIndex + i * (subdivisions + 1) + (j + 1));
+                        short bottomRight = (short)(waterStartIndex + (i + 1) * (subdivisions + 1) + (j + 1));
                         
                         waterIndices.Add(topLeft);
                         waterIndices.Add(bottomLeft);
@@ -324,7 +325,7 @@ namespace Gamejamai.Engine
                 _terrainVertexBuffer = new VertexBuffer(_graphicsDevice, typeof(VertexPositionNormalTexture), terrainVertices.Count, BufferUsage.WriteOnly);
                 _terrainVertexBuffer.SetData(terrainVertices.ToArray());
                 
-                _terrainIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(int), terrainIndices.Count, BufferUsage.WriteOnly);
+                _terrainIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(short), terrainIndices.Count, BufferUsage.WriteOnly);
                 _terrainIndexBuffer.SetData(terrainIndices.ToArray());
                 _terrainIndexCount = terrainIndices.Count;
             }
@@ -334,7 +335,7 @@ namespace Gamejamai.Engine
                 _waterVertexBuffer = new VertexBuffer(_graphicsDevice, typeof(VertexPositionNormalTexture), waterVertices.Count, BufferUsage.WriteOnly);
                 _waterVertexBuffer.SetData(waterVertices.ToArray());
                 
-                _waterIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(int), waterIndices.Count, BufferUsage.WriteOnly);
+                _waterIndexBuffer = new IndexBuffer(_graphicsDevice, typeof(short), waterIndices.Count, BufferUsage.WriteOnly);
                 _waterIndexBuffer.SetData(waterIndices.ToArray());
                 _waterIndexCount = waterIndices.Count;
             }
@@ -573,7 +574,7 @@ namespace Gamejamai.Engine
         {
             // Create simple 3D objects (trees, rocks) using basic shapes
             var vertices = new List<VertexPositionNormalTexture>();
-            var indices = new List<int>();
+            var indices = new List<short>();
             
             switch (type)
             {
@@ -594,7 +595,7 @@ namespace Gamejamai.Engine
                 var vertexBuffer = new VertexBuffer(_graphicsDevice, typeof(VertexPositionNormalTexture), vertices.Count, BufferUsage.WriteOnly);
                 vertexBuffer.SetData(vertices.ToArray());
                 
-                var indexBuffer = new IndexBuffer(_graphicsDevice, typeof(int), indices.Count, BufferUsage.WriteOnly);
+                var indexBuffer = new IndexBuffer(_graphicsDevice, typeof(short), indices.Count, BufferUsage.WriteOnly);
                 indexBuffer.SetData(indices.ToArray());
                 
                 // Set up transformation
@@ -631,7 +632,7 @@ namespace Gamejamai.Engine
             }
         }
         
-        private void CreateCylinder(List<VertexPositionNormalTexture> vertices, List<int> indices, float radius, float height, int segments)
+        private void CreateCylinder(List<VertexPositionNormalTexture> vertices, List<short> indices, float radius, float height, int segments)
         {
             int startIndex = vertices.Count;
             
@@ -660,10 +661,10 @@ namespace Gamejamai.Engine
             // Create cylinder indices
             for (int i = 0; i < segments; i++)
             {
-                int bottomLeft = startIndex + i * 2;
-                int bottomRight = startIndex + (i + 1) * 2;
-                int topLeft = startIndex + i * 2 + 1;
-                int topRight = startIndex + (i + 1) * 2 + 1;
+                short bottomLeft = (short)(startIndex + i * 2);
+                short bottomRight = (short)(startIndex + (i + 1) * 2);
+                short topLeft = (short)(startIndex + i * 2 + 1);
+                short topRight = (short)(startIndex + (i + 1) * 2 + 1);
                 
                 // First triangle
                 indices.Add(bottomLeft);
@@ -677,7 +678,7 @@ namespace Gamejamai.Engine
             }
         }
         
-        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<int> indices, float size)
+        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<short> indices, float size)
         {
             int startIndex = vertices.Count;
             Vector3 half = Vector3.One * size * 0.5f;
@@ -697,19 +698,19 @@ namespace Gamejamai.Engine
             }
             
             // Define cube indices
-            int[] cubeIndices = {
-                startIndex + 0, startIndex + 2, startIndex + 1, startIndex + 1, startIndex + 2, startIndex + 3,
-                startIndex + 4, startIndex + 5, startIndex + 6, startIndex + 5, startIndex + 7, startIndex + 6,
-                startIndex + 0, startIndex + 1, startIndex + 5, startIndex + 0, startIndex + 5, startIndex + 4,
-                startIndex + 2, startIndex + 6, startIndex + 7, startIndex + 2, startIndex + 7, startIndex + 3,
-                startIndex + 0, startIndex + 4, startIndex + 6, startIndex + 0, startIndex + 6, startIndex + 2,
-                startIndex + 1, startIndex + 3, startIndex + 7, startIndex + 1, startIndex + 7, startIndex + 5
+            short[] cubeIndices = {
+                (short)(startIndex + 0), (short)(startIndex + 2), (short)(startIndex + 1), (short)(startIndex + 1), (short)(startIndex + 2), (short)(startIndex + 3),
+                (short)(startIndex + 4), (short)(startIndex + 5), (short)(startIndex + 6), (short)(startIndex + 5), (short)(startIndex + 7), (short)(startIndex + 6),
+                (short)(startIndex + 0), (short)(startIndex + 1), (short)(startIndex + 5), (short)(startIndex + 0), (short)(startIndex + 5), (short)(startIndex + 4),
+                (short)(startIndex + 2), (short)(startIndex + 6), (short)(startIndex + 7), (short)(startIndex + 2), (short)(startIndex + 7), (short)(startIndex + 3),
+                (short)(startIndex + 0), (short)(startIndex + 4), (short)(startIndex + 6), (short)(startIndex + 0), (short)(startIndex + 6), (short)(startIndex + 2),
+                (short)(startIndex + 1), (short)(startIndex + 3), (short)(startIndex + 7), (short)(startIndex + 1), (short)(startIndex + 7), (short)(startIndex + 5)
             };
             
             indices.AddRange(cubeIndices);
         }
         
-        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<int> indices, Vector3 size, Vector3 position)
+        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<short> indices, Vector3 size, Vector3 position)
         {
             int startVertex = vertices.Count;
             
@@ -765,23 +766,23 @@ namespace Gamejamai.Engine
                 }
                 
                 // Add indices for two triangles per face
-                int baseIndex = startVertex + face * 4;
-                indices.Add(baseIndex + 0);
-                indices.Add(baseIndex + 1);
-                indices.Add(baseIndex + 2);
+                short baseIndex = (short)(startVertex + face * 4);
+                indices.Add((short)(baseIndex + 0));
+                indices.Add((short)(baseIndex + 1));
+                indices.Add((short)(baseIndex + 2));
                 
-                indices.Add(baseIndex + 0);
-                indices.Add(baseIndex + 2);
-                indices.Add(baseIndex + 3);
+                indices.Add((short)(baseIndex + 0));
+                indices.Add((short)(baseIndex + 2));
+                indices.Add((short)(baseIndex + 3));
             }
         }
         
-        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<int> indices, float size, Vector3 position)
+        private void CreateCube(List<VertexPositionNormalTexture> vertices, List<short> indices, float size, Vector3 position)
         {
             CreateCube(vertices, indices, new Vector3(size, size, size), position);
         }
         
-        private void CreateSphere(List<VertexPositionNormalTexture> vertices, List<int> indices, float radius, int segments)
+        private void CreateSphere(List<VertexPositionNormalTexture> vertices, List<short> indices, float radius, int segments)
         {
             int startIndex = vertices.Count;
             
@@ -812,10 +813,10 @@ namespace Gamejamai.Engine
             {
                 for (int j = 0; j < segments; j++)
                 {
-                    int current = startIndex + i * (segments + 1) + j;
-                    int next = startIndex + i * (segments + 1) + (j + 1);
-                    int currentRow = startIndex + (i + 1) * (segments + 1) + j;
-                    int nextRow = startIndex + (i + 1) * (segments + 1) + (j + 1);
+                    short current = (short)(startIndex + i * (segments + 1) + j);
+                    short next = (short)(startIndex + i * (segments + 1) + (j + 1));
+                    short currentRow = (short)(startIndex + (i + 1) * (segments + 1) + j);
+                    short nextRow = (short)(startIndex + (i + 1) * (segments + 1) + (j + 1));
                     
                     indices.Add(current);
                     indices.Add(currentRow);
